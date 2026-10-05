@@ -1,0 +1,6 @@
+/target
+**/*.rs.bk
+.DS_Store
+# A lockfile is useful for a binary workshop, but the SDK path-deps make it
+# machine-specific while the SDK is unpublished. Revisit once it ships to crates.io.
+Cargo.lock

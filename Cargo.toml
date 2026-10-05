@@ -1,0 +1,27 @@
+[package]
+name = "once-upon-agentic-ai"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+publish = false
+description = "A hands-on Rust workshop that teaches the Strands Agents SDK by building a Dungeons & Dragons Game Master."
+
+# The Rust Strands SDK is not yet published to crates.io (the tools crate is not
+# published at all), so the workshop depends on a local checkout via path. See
+# README.md -> "Where the SDK comes from" for how to point these elsewhere.
+[dependencies]
+strands-agents = { path = "../../aws/strands-agents-rust/strands-agents" }
+strands-agents-tools = { path = "../../aws/strands-agents-rust/strands-agents-tools", features = [
+    "http-fetch",
+] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[[bin]]
+name = "ch1-summoning"
+path = "1_strands_basics/main.rs"
+
+[[bin]]
+name = "ch2-vended-tools"
+path = "2_vended_tools/main.rs"

@@ -1,0 +1,7 @@
+# The strands-agents-tools manifest declares its strands-agents dependency with
+# `registry = "codeartifact"`, an internal index used only for publishing. This
+# workshop resolves that crate from a local path, so the registry is never
+# fetched - but cargo still needs the name defined to parse the manifest. Alias
+# it to the public crates.io index: auth-free, reproducible, never contacted.
+[registries.codeartifact]
+index = "sparse+https://index.crates.io/"
