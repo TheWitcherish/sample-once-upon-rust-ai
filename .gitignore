@@ -1,6 +1,33 @@
+# ─── Rust build artifacts ───────────────────────────────────────────────────
 /target
 **/*.rs.bk
-.DS_Store
-# A lockfile is useful for a binary workshop, but the SDK path-deps make it
-# machine-specific while the SDK is unpublished. Revisit once it ships to crates.io.
+*.pdb
+
+# Cargo lockfile: normally COMMITTED for a binary. This workshop depends on an
+# unpublished SDK by local path, so the lock would pin a machine-specific SDK
+# version. Revisit (and commit it) once the SDK ships to crates.io.
 Cargo.lock
+
+# ─── Secrets & credentials - never push these ───────────────────────────────
+.env
+.env.*
+*.pem
+*.key
+*.p12
+credentials
+.aws/
+secrets.*
+
+# ─── Build / packaging output ───────────────────────────────────────────────
+/dist
+/out
+
+# ─── OS cruft ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Editor / IDE ───────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*~
