@@ -46,7 +46,7 @@ environment. Nothing is hard-coded alone.
 |---|---|---|---|
 | 1. The Art of Agent Summoning | `1_strands_basics/` | Your first agent, a system prompt, debug logs | **ready** |
 | 2. The Adventurer's Arsenal - Vended Tools | `2_vended_tools/` | A tool you did not write: `http_fetch` on the live D&D 5e API | **ready** |
-| 3. The Art of Magical Forging | `3_custom_tools/` | Your own tool: the dice roller | planned |
+| 3. The Art of Magical Forging | `3_custom_tools/` | Your own tool: the dice roller | **ready** |
 | 4. Planar Portals - MCP | `4_mcp_integration/` | The dice roller served over MCP, and an agent that consumes it | planned |
 | 5. The Grand Alliance - A2A | `5_a2a_integration/` | Rules Agent + Character Agent over A2A, a Game Master orchestrator | planned |
 | 6. Web Interface | `game-master-ui/` | Play your Game Master through the browser | planned |
@@ -62,7 +62,7 @@ early `0.1.0` there; `strands-agents-tools`, which Chapter 2 onward depends on, 
 all). So `Cargo.toml` points at a **local checkout** of the SDK via a relative path:
 
 ```
-sample-once-upon-agentic-ai-rust/   <- you are here
+sample-once-upon-rust-ai/           <- you are here
 ../../aws/strands-agents-rust/      <- the SDK checkout the paths expect
 ```
 
