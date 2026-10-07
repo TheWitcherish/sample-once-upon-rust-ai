@@ -1,13 +1,12 @@
 //! Chapter 2 - The Adventurer's Arsenal: Vended Tools
 //!
-//! A side-by-side port of the Python workshop's `2_vended_tools/`:
+//! A side-by-side port of the Python workshop's `2_vended_tools/agent_with_vended_tools.py`:
 //!   <https://github.com/aws-samples/sample-once-upon-agentic-ai/tree/main/2_vended_tools>
 //!
 //! The game master gains a tool it did not have to write: `http_fetch`, shipped
-//! by the `strands-agents-tools` crate. It hits the live Open5e API
-//! (<https://api.open5e.com>), which serves the SRD 5.1 - the System Reference
-//! Document, a freely licensed (CC-BY-4.0) TTRPG rulebook - to look up real
-//! rules instead of inventing them.
+//! by the `strands-agents-tools` crate (Python: `http_request` from
+//! `strands.vended_tools`). It looks up real spell and monster data on the live
+//! 5e SRD API instead of inventing it.
 //!
 //! Run with:
 //!   cargo run --bin ch2-vended-tools
@@ -20,9 +19,16 @@ use once_upon_agentic_ai::{GAME_MASTER_PROMPT, game_master_model};
 use strands_agents::{AgentBuilder, Result};
 use strands_agents_tools::HttpFetch;
 
-/// A spell the SRD actually contains, so the lookup resolves live on stream.
-const QUERY: &str = "My wizard wants to cast Fireball. Look up the real SRD rules \
-     and tell me its level, casting time, range, and damage.";
+/// Where the rules live. Kept line for line with the Python prompt so the two
+/// versions read side by side.
+const RULES_LOOKUP: &str =
+    "When asked about a spell or a monster, look it up on the 5e SRD API and answer from the data:
+    - spells:   https://www.dnd5eapi.co/api/2014/spells/<index>
+    - monsters: https://www.dnd5eapi.co/api/2014/monsters/<index>
+    where <index> is the lowercase name with hyphens (e.g. fireball, adult-red-dragon).";
+
+/// The Python chapter's exact query.
+const QUERY: &str = "What does the Fireball spell do, and how much damage does it deal?";
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -39,14 +45,8 @@ async fn main() -> Result<()> {
     // tell the game master where the rules live; it decides when to reach for it.
     let mut agent = AgentBuilder::new()
         .model(Box::new(model))
-        .name("Game Master")
-        .system_prompt(format!(
-            "{GAME_MASTER_PROMPT}. When a rule, spell, or monster detail matters, \
-             look it up on the Open5e SRD API with your http_fetch tool - for example \
-             https://api.open5e.com/v2/spells/srd_fireball/ - then answer from \
-             what you fetched, not from memory."
-        ))
         .tool(Arc::new(HttpFetch::new()))
+        .system_prompt(format!("{GAME_MASTER_PROMPT}.\n    {RULES_LOOKUP}"))
         .build()
         .await?;
 

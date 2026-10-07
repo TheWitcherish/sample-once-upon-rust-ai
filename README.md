@@ -45,7 +45,7 @@ environment. Nothing is hard-coded alone.
 | Chapter | Folder | What you build | Status |
 |---|---|---|---|
 | 1. The Art of Agent Summoning | `1_strands_basics/` | Your first agent, a system prompt, debug logs | **ready** |
-| 2. The Adventurer's Arsenal - Vended Tools | `2_vended_tools/` | A tool you did not write: `http_fetch` on the live Open5e SRD API | **ready** |
+| 2. The Adventurer's Arsenal - Vended Tools | `2_vended_tools/` | A tool you did not write: `http_fetch` on the live 5e SRD API | **ready** |
 | 3. The Art of Magical Forging | `3_custom_tools/` | Your own tool: the dice roller | **ready** |
 | 4. Planar Portals - MCP | `4_mcp_integration/` | The dice roller served over MCP, and an agent that consumes it | planned |
 | 5. The Grand Alliance - A2A | `5_a2a_integration/` | Rules Agent + Character Agent over A2A, a Game Master orchestrator | planned |
@@ -56,7 +56,7 @@ Complete the chapters in order: each reuses what the previous one built. Every c
 `cargo run --bin ch<N>-<name>`.
 
 Rules lookups use the SRD 5.1 (System Reference Document, CC-BY-4.0) served by the
-[Open5e API](https://open5e.com).
+[5e SRD API](https://www.dnd5eapi.co).
 
 ## Where the SDK comes from
 
