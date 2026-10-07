@@ -14,6 +14,8 @@ description = "A hands-on Rust workshop that teaches the Strands Agents SDK by b
 strands-agents = { path = "../../aws/strands-agents-rust/strands-agents" }
 strands-agents-tools = { path = "../../aws/strands-agents-rust/strands-agents-tools", features = [
     "http-fetch",
+    "shell",
+    "file-ops",
 ] }
 async-trait = "0.1.92"
 rand = "0.10.3"
@@ -29,6 +31,10 @@ path = "1_strands_basics/main.rs"
 [[bin]]
 name = "ch2-vended-tools"
 path = "2_vended_tools/main.rs"
+
+[[bin]]
+name = "ch2-bonus-quest"
+path = "2_vended_tools/bonus_quest.rs"
 
 [[bin]]
 name = "ch3-custom-tools"

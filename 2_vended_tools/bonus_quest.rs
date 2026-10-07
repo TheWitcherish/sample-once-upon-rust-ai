@@ -1,0 +1,163 @@
+//! Chapter 2 - Bonus Quest: Kiro the Grey Hat
+//!
+//! A side-by-side port of the Python workshop's `2_vended_tools/bonus_quest.py`:
+//!   <https://github.com/aws-samples/sample-once-upon-agentic-ai/tree/main/2_vended_tools>
+//!
+//! Kiro gets two powerful vended tools: `shell` (Python: `shell`) and `editor`
+//! (Python: `file_editor`). Tools that write files and run commands should not
+//! fire unsupervised, so every call pauses for your approval first.
+//!
+//! Python reaches for the vended `HumanInTheLoop` intervention in stdio mode. The
+//! Rust SDK has no vended interventions yet, so we build the same gate from what
+//! it does ship: a hook that raises an interrupt before each tool call, and a loop
+//! that asks you on stdin and resumes the agent with your answer.
+//!
+//! Run with:
+//!   cargo run --bin ch2-bonus-quest
+//!
+//! Kiro writes its scroll into the directory you run from.
+
+use std::io::{self, BufRead, Write};
+use std::sync::Arc;
+
+use once_upon_agentic_ai::game_master_model;
+use serde_json::json;
+use strands_agents::hooks::{BeforeToolCallEvent, HookProvider};
+use strands_agents::interrupt::Interrupt;
+use strands_agents::tools::ToolContext;
+use strands_agents::types::content::ContentBlock;
+use strands_agents::{AgentBuilder, Result};
+use strands_agents_tools::{Editor, Shell};
+
+/// The Python chapter's exact query.
+const QUERY: &str = "Create a magical scroll that generates the first 10 numbers of the Fibonacci sequence and demonstrate its power!";
+
+/// What Kiro hears when you refuse a spell. It becomes the tool result, so the
+/// model knows the call never ran.
+const DENIED: &str = "The adventurer refused to let this spell be cast.";
+
+/// The Python chapter's system prompt, line for line.
+fn system_prompt(cwd: &str) -> String {
+    format!(
+        "You are Kiro the Grey Hat, a wizard who specializes in the ancient art of code magic.
+    When asked to create spells (code), you inscribe them on parchment (files) in the directory {cwd}
+    and then cast them to demonstrate their power."
+    )
+}
+
+/// Only an explicit yes lets a tool run. Anything else, including an empty line, is a no.
+fn is_approved(answer: &str) -> bool {
+    matches!(answer.trim().to_lowercase().as_str(), "y" | "yes")
+}
+
+/// The gate. Before every tool call it raises an interrupt carrying the tool name
+/// and input. The agent pauses; when it resumes, the same hook runs again and
+/// `interrupt` now returns the human's answer instead of halting.
+struct HumanInTheLoop;
+
+impl HookProvider for HumanInTheLoop {
+    fn on_before_tool_call(&self, event: &mut BeforeToolCallEvent, _ctx: &mut ToolContext) {
+        let request = json!({ "tool": event.tool_name, "input": event.input });
+        if let Ok(answer) = event.interrupt("approval", request) {
+            if !answer.as_str().is_some_and(is_approved) {
+                event.cancel_tool = Some(DENIED.to_string());
+            }
+        }
+        // Err(InterruptHalt) is the first pass: the runtime records the pause for us.
+    }
+
+    fn name(&self) -> &str {
+        "HumanInTheLoop"
+    }
+}
+
+/// Show one pending tool call and read y/N from stdin.
+fn ask(interrupt: &Interrupt, stdin: &mut impl BufRead) -> Result<ContentBlock> {
+    let request = interrupt.reason.clone().unwrap_or_default();
+    let tool = request["tool"].as_str().unwrap_or("an unknown tool");
+    println!("\n--- Kiro wants to cast `{tool}` ---");
+    println!("{}", serde_json::to_string_pretty(&request["input"])?);
+    print!("Approve? [y/N] ");
+    io::stdout().flush()?;
+
+    let mut answer = String::new();
+    stdin.read_line(&mut answer)?;
+    Ok(ContentBlock::interrupt_response(
+        &interrupt.id,
+        json!(answer.trim()),
+    ))
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "strands_agents=warn".into()),
+        )
+        .init();
+
+    let cwd = std::env::current_dir()?.display().to_string();
+    let model = game_master_model().await?;
+
+    let mut arcane_scribe = AgentBuilder::new()
+        .model(Box::new(model))
+        .tool(Arc::new(Shell::new()))
+        .tool(Arc::new(Editor::new()))
+        .hook(Box::new(HumanInTheLoop))
+        .system_prompt(system_prompt(&cwd))
+        .build()
+        .await?;
+
+    println!("Adventurer: {QUERY}");
+    let mut stdin = io::stdin().lock();
+    let mut result = arcane_scribe.run(QUERY).await?;
+
+    // Each pause hands back the calls waiting for a verdict. Answer them all, resume.
+    while result.is_interrupt() {
+        let answers = result
+            .interrupts
+            .iter()
+            .map(|interrupt| ask(interrupt, &mut stdin))
+            .collect::<Result<Vec<_>>>()?;
+        result = arcane_scribe.run(answers).await?;
+    }
+
+    println!("\nKiro the Grey Hat: {}", result.content);
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_an_explicit_yes_approves() {
+        for yes in ["y", "Y", "yes", " YES \n"] {
+            assert!(is_approved(yes), "{yes:?} should approve");
+        }
+        for no in ["", "\n", "n", "no", "sure", "yy"] {
+            assert!(!is_approved(no), "{no:?} should deny");
+        }
+    }
+
+    #[test]
+    fn ask_answers_the_interrupt_it_was_shown() -> Result<()> {
+        let interrupt = Interrupt::new(
+            "id-42",
+            "approval",
+            Some(json!({ "tool": "shell", "input": { "command": "ls" } })),
+            Default::default(),
+        );
+        let block = ask(&interrupt, &mut io::Cursor::new("y\n"))?;
+        let raw = serde_json::to_value(&block)?;
+        assert!(raw.to_string().contains("id-42"), "{raw}");
+        assert!(raw.to_string().contains("\"y\""), "{raw}");
+        Ok(())
+    }
+
+    #[test]
+    fn prompt_names_the_working_directory() {
+        assert!(system_prompt("/tmp/scrolls").contains("in the directory /tmp/scrolls\n"));
+    }
+}
