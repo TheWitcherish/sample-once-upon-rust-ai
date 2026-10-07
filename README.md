@@ -60,7 +60,7 @@ Rules lookups use the SRD 5.1 (System Reference Document, CC-BY-4.0) served by t
 [5e SRD API](https://www.dnd5eapi.co).
 
 Chapter 4 runs in two terminals: `cargo run --bin ch4-dice-mcp-server` first, then
-`cargo run --bin ch4-gamemaster-mcp-client`. The server listens on `127.0.0.1:8002` and only accepts
+`cargo run --bin ch4-gamemaster-mcp-client`, then type a request such as `roll 3d20`. The server listens on `127.0.0.1:8002` and only accepts
 loopback `Host` headers. To serve it beyond your machine, set `MCP_BIND` and name the extra hosts in
 `MCP_ALLOWED_HOSTS`. It has no authentication, like the Python chapter, so put an authenticating
 proxy in front before exposing it.

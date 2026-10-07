@@ -7,6 +7,10 @@
 //! MCP server over streamable HTTP, discovers `roll_dice` at runtime, and calls
 //! it across the wire. Same SDK, same agent; the tool just lives somewhere else.
 //!
+//! The Python chapter sends one fixed request. Here you type your own, as many
+//! as you like: "roll 3d20", "roll a d100 for loot", or the Python chapter's
+//! character-creation request. Watch the server terminal light up per die.
+//!
 //! Start the server first, in another terminal:
 //!   cargo run --bin ch4-dice-mcp-server
 //! Then:
@@ -16,6 +20,7 @@
 //!   MCP_URL  the server's MCP endpoint (default http://localhost:8002/mcp)
 
 use std::env;
+use std::io::{self, BufRead, Write};
 use std::sync::Arc;
 
 use once_upon_agentic_ai::game_master_model;
@@ -29,8 +34,25 @@ const LADY_LUCK_PROMPT: &str = "You are Lady Luck, the mystical keeper of dice a
     You speak with theatrical flair and always announce dice rolls with appropriate drama.
     You know all about TTRPG mechanics, always use the appropriate tools when applicable - never make up results!";
 
-/// The Python chapter's query, with TTRPG for the brand name.
-const QUERY: &str = "Help me create a new TTRPG character! Roll the strength, wisdom, charisma and intelligence abilities scores using 4d6 drop lowest method.";
+/// The Python chapter's query, with TTRPG for the brand name. Offered as an example.
+const PYTHON_QUERY: &str = "Help me create a new TTRPG character! Roll the strength, wisdom, charisma and intelligence abilities scores using 4d6 drop lowest method.";
+
+/// Read the adventurer's next request. `None` means leave: end of input, an
+/// empty line, or `quit` / `exit`.
+fn next_request(stdin: &mut impl BufRead) -> io::Result<Option<String>> {
+    print!("\nAdventurer> ");
+    io::stdout().flush()?;
+
+    let mut line = String::new();
+    if stdin.read_line(&mut line)? == 0 {
+        return Ok(None);
+    }
+    let request = line.trim();
+    if request.is_empty() || ["quit", "exit"].contains(&request.to_lowercase().as_str()) {
+        return Ok(None);
+    }
+    Ok(Some(request.to_string()))
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -52,21 +74,55 @@ async fn main() -> Result<()> {
         .build()
         .await?;
 
-    println!("Adventurer: {QUERY}\n");
-    let result = gamemaster.run(QUERY).await?;
-    println!("Lady Luck: {}\n", result.content);
+    println!("Lady Luck is listening, her dice on the server at {url}.");
+    println!("Ask for any roll, for example:");
+    println!("  roll 3d20");
+    println!("  {PYTHON_QUERY}");
+    println!("Press Enter on an empty line, or type quit, to leave.");
 
-    // The rolls happened in another process. Count how many crossed the portal;
-    // the server's log shows each one.
-    let metrics = &result.event_loop_metrics;
-    let rolls = metrics
-        .tool_metrics
-        .get("roll_dice")
-        .map_or(0, |m| m.call_count);
-    println!(
-        "[roll_dice calls over MCP={rolls} | server={url} | stop_reason={}]",
-        result.stop_reason
-    );
+    let mut stdin = io::stdin().lock();
+    let mut rolls_so_far = 0;
+    while let Some(request) = next_request(&mut stdin)? {
+        let result = gamemaster.run(request.as_str()).await?;
+        println!("\nLady Luck: {}", result.content);
 
+        // The rolls happened in another process; the server's log shows each one.
+        // The agent's metrics count the whole conversation, so subtract the
+        // earlier turns to get this one.
+        let total = result
+            .event_loop_metrics
+            .tool_metrics
+            .get("roll_dice")
+            .map_or(0, |m| m.call_count);
+        println!(
+            "\n[roll_dice calls over MCP this turn={} | stop_reason={}]",
+            total - rolls_so_far,
+            result.stop_reason
+        );
+        rolls_so_far = total;
+    }
+
+    println!("\nLady Luck tucks her dice away. Until next time, adventurer.");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn read(input: &str) -> Option<String> {
+        next_request(&mut io::Cursor::new(input)).expect("reading a cursor cannot fail")
+    }
+
+    #[test]
+    fn a_request_is_trimmed_and_kept() {
+        assert_eq!(read("  roll 3d20  \n"), Some("roll 3d20".to_string()));
+    }
+
+    #[test]
+    fn empty_line_quit_exit_and_eof_all_leave() {
+        for input in ["\n", "   \n", "quit\n", "EXIT\n", ""] {
+            assert_eq!(read(input), None, "{input:?} should leave");
+        }
+    }
 }
