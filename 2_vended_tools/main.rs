@@ -4,8 +4,10 @@
 //!   <https://github.com/aws-samples/sample-once-upon-agentic-ai/tree/main/2_vended_tools>
 //!
 //! The game master gains a tool it did not have to write: `http_fetch`, shipped
-//! by the `strands-agents-tools` crate. It hits the live D&D 5e API
-//! (<https://www.dnd5eapi.co>) to look up real rules instead of inventing them.
+//! by the `strands-agents-tools` crate. It hits the live Open5e API
+//! (<https://api.open5e.com>), which serves the SRD 5.1 - the System Reference
+//! Document, a freely licensed (CC-BY-4.0) TTRPG rulebook - to look up real
+//! rules instead of inventing them.
 //!
 //! Run with:
 //!   cargo run --bin ch2-vended-tools
@@ -18,8 +20,8 @@ use once_upon_agentic_ai::{GAME_MASTER_PROMPT, game_master_model};
 use strands_agents::{AgentBuilder, Result};
 use strands_agents_tools::HttpFetch;
 
-/// A spell the 5e API actually serves, so the lookup resolves live on stream.
-const QUERY: &str = "My wizard wants to cast Fireball. Look up the real 5e rules \
+/// A spell the SRD actually contains, so the lookup resolves live on stream.
+const QUERY: &str = "My wizard wants to cast Fireball. Look up the real SRD rules \
      and tell me its level, casting time, range, and damage.";
 
 #[tokio::main]
@@ -40,8 +42,8 @@ async fn main() -> Result<()> {
         .name("Game Master")
         .system_prompt(format!(
             "{GAME_MASTER_PROMPT}. When a rule, spell, or monster detail matters, \
-             look it up on the D&D 5e API with your http_fetch tool - for example \
-             https://www.dnd5eapi.co/api/2014/spells/fireball - then answer from \
+             look it up on the Open5e SRD API with your http_fetch tool - for example \
+             https://api.open5e.com/v2/spells/srd_fireball/ - then answer from \
              what you fetched, not from memory."
         ))
         .tool(Arc::new(HttpFetch::new()))

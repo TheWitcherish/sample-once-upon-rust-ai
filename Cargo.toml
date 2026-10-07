@@ -5,7 +5,7 @@ edition = "2024"
 rust-version = "1.85"
 license = "MIT"
 publish = false
-description = "A hands-on Rust workshop that teaches the Strands Agents SDK by building a Dungeons & Dragons Game Master."
+description = "A hands-on Rust workshop that teaches the Strands Agents SDK by building a Game Master for a Table-Top Role-Playing Game (TTRPG)."
 
 # The Rust Strands SDK is not yet published to crates.io (the tools crate is not
 # published at all), so the workshop depends on a local checkout via path. See

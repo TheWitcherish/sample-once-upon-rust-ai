@@ -18,10 +18,8 @@ use strands_agents::models::{BedrockModel, ModelConfig};
 pub const DEFAULT_MODEL_ID: &str = "us.anthropic.claude-sonnet-4-6";
 
 /// The system prompt shared by the whole adventure.
-///
-/// Kept verbatim from the Python workshop (typo and all) so the two versions
-/// read side by side.
-pub const GAME_MASTER_PROMPT: &str = "You are a game master for a Dungeon & Dragon game";
+pub const GAME_MASTER_PROMPT: &str =
+    "You are a Game Master for a Table-Top Role-Playing Game (TTRPG)";
 
 /// Resolve the model id from `MODEL_ID`, falling back to the verified default.
 pub fn model_id() -> String {

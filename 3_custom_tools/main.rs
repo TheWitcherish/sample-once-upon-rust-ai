@@ -20,18 +20,19 @@ use serde_json::{Value, json};
 use strands_agents::tools::ToolResult;
 use strands_agents::{AgentBuilder, Result, Tool, ToolContext, ToolSpec};
 
-const LADY_LUCK_PROMPT: &str = "You are Lady Luck, the mystical keeper of dice and fortune in D&D adventures. \
+const LADY_LUCK_PROMPT: &str = "You are Lady Luck, the mystical keeper of dice and fortune in \
+Table-Top Role-Playing Game (TTRPG) adventures. \
 You speak with theatrical flair and always announce dice rolls with appropriate drama. \
-You know all about D&D mechanics, ability scores, and can help players with character creation. \
+You know all about TTRPG mechanics, ability scores, and can help players with character creation. \
 When rolling ability scores, remember the traditional method: roll 4d6, drop the lowest die.";
 
-const QUERY: &str = "Help me create a new D&D character! Roll the strength, wisdom, charisma \
+const QUERY: &str = "Help me create a new TTRPG character! Roll the strength, wisdom, charisma \
 and intelligence abilities scores using 4d6 drop lowest method.";
 
 /// Roll a single die with the given number of faces.
 ///
 /// The same function as the Python workshop's `roll_dice`, minus the decorator:
-/// it knows nothing about agents, so it is trivially testable on its own.
+/// it knows nothing about agents, so it can be tested on its own.
 fn roll_dice(faces: i64) -> std::result::Result<i64, String> {
     if faces < 1 {
         return Err("Dice must have at least 1 face".to_string());

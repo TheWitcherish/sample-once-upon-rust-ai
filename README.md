@@ -8,7 +8,7 @@
 *"Roll for Initiative... in Rust!"*
 
 Ever had an agent forget you the moment the demo moved on? We are going to build one that does the
-opposite - a Dungeons & Dragons Game Master that remembers the party, reaches for real rules, and
+opposite - a Game Master for a Table-Top Role-Playing Game (TTRPG) that remembers the party, reaches for real rules, and
 learns new tricks one chapter at a time. One agent first, then a tool it did not have to write, then
 a tool it *did*, then the same tool over a wire, then a whole party of agents talking to each other.
 
@@ -34,7 +34,7 @@ Chapter 1 is done.
 The agents run on **Amazon Bedrock** (Claude Sonnet 4.6 by default). Pick a cheaper model any time:
 
 ```sh
-export MODEL_ID=us.anthropic.claude-haiku-4-5-20251001-v1:0
+export MODEL_ID=YOUR_MODEL   # e.g. us.anthropic.claude-haiku-4-5-20251001-v1:0
 ```
 
 Model ids are read from `MODEL_ID` with a verified fallback; the region comes from the standard AWS
@@ -45,7 +45,7 @@ environment. Nothing is hard-coded alone.
 | Chapter | Folder | What you build | Status |
 |---|---|---|---|
 | 1. The Art of Agent Summoning | `1_strands_basics/` | Your first agent, a system prompt, debug logs | **ready** |
-| 2. The Adventurer's Arsenal - Vended Tools | `2_vended_tools/` | A tool you did not write: `http_fetch` on the live D&D 5e API | **ready** |
+| 2. The Adventurer's Arsenal - Vended Tools | `2_vended_tools/` | A tool you did not write: `http_fetch` on the live Open5e SRD API | **ready** |
 | 3. The Art of Magical Forging | `3_custom_tools/` | Your own tool: the dice roller | **ready** |
 | 4. Planar Portals - MCP | `4_mcp_integration/` | The dice roller served over MCP, and an agent that consumes it | planned |
 | 5. The Grand Alliance - A2A | `5_a2a_integration/` | Rules Agent + Character Agent over A2A, a Game Master orchestrator | planned |
@@ -54,6 +54,9 @@ environment. Nothing is hard-coded alone.
 
 Complete the chapters in order: each reuses what the previous one built. Every chapter is one binary -
 `cargo run --bin ch<N>-<name>`.
+
+Rules lookups use the SRD 5.1 (System Reference Document, CC-BY-4.0) served by the
+[Open5e API](https://open5e.com).
 
 ## Where the SDK comes from
 
