@@ -58,10 +58,10 @@ struct HumanInTheLoop;
 impl HookProvider for HumanInTheLoop {
     fn on_before_tool_call(&self, event: &mut BeforeToolCallEvent, _ctx: &mut ToolContext) {
         let request = json!({ "tool": event.tool_name, "input": event.input });
-        if let Ok(answer) = event.interrupt("approval", request) {
-            if !answer.as_str().is_some_and(is_approved) {
-                event.cancel_tool = Some(DENIED.to_string());
-            }
+        if let Ok(answer) = event.interrupt("approval", request)
+            && !answer.as_str().is_some_and(is_approved)
+        {
+            event.cancel_tool = Some(DENIED.to_string());
         }
         // Err(InterruptHalt) is the first pass: the runtime records the pause for us.
     }

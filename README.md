@@ -48,7 +48,7 @@ environment. Nothing is hard-coded alone.
 | 2. The Adventurer's Arsenal - Vended Tools | `2_vended_tools/` | A tool you did not write: `http_fetch` on the live 5e SRD API | **ready** |
 | 2. Bonus Quest - Kiro the Grey Hat | `2_vended_tools/bonus_quest.rs` | `shell` + `editor`, with your y/N approval before every call (`cargo run --bin ch2-bonus-quest`) | **ready** |
 | 3. The Art of Magical Forging | `3_custom_tools/` | Your own tool: the dice roller | **ready** |
-| 4. Planar Portals - MCP | `4_mcp_integration/` | The dice roller served over MCP, and an agent that consumes it | planned |
+| 4. Planar Portals - MCP | `4_mcp_integration/` | The dice roller served over MCP with `rmcp`, and Lady Luck consuming it | **ready** |
 | 5. The Grand Alliance - A2A | `5_a2a_integration/` | Rules Agent + Character Agent over A2A, a Game Master orchestrator | planned |
 | 6. Web Interface | `game-master-ui/` | Play your Game Master through the browser | planned |
 | 7. The Enchanted Armour - Harness | `7_strands_harness/` | The Game Master rebuilt with the managed agent loop | planned |
@@ -58,6 +58,12 @@ Complete the chapters in order: each reuses what the previous one built. Every c
 
 Rules lookups use the SRD 5.1 (System Reference Document, CC-BY-4.0) served by the
 [5e SRD API](https://www.dnd5eapi.co).
+
+Chapter 4 runs in two terminals: `cargo run --bin ch4-dice-mcp-server` first, then
+`cargo run --bin ch4-gamemaster-mcp-client`. The server listens on `127.0.0.1:8002` and only accepts
+loopback `Host` headers. To serve it beyond your machine, set `MCP_BIND` and name the extra hosts in
+`MCP_ALLOWED_HOSTS`. It has no authentication, like the Python chapter, so put an authenticating
+proxy in front before exposing it.
 
 ## Where the SDK comes from
 
