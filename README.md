@@ -50,7 +50,7 @@ environment. Nothing is hard-coded alone.
 | 3. The Art of Magical Forging | `3_custom_tools/` | Your own tool: the dice roller | **ready** |
 | 4. Planar Portals - MCP | `4_mcp_integration/` | The dice roller served over MCP with `rmcp`, and Lady Luck consuming it | **ready** |
 | 5. The Grand Alliance - A2A | `5_a2a_integration/` | Rules Agent (RAG over the Basic Rules) + Character Agent over A2A, a Game Master orchestrator with typed `StoryOutput` answers | **ready** |
-| 6. Web Interface | `game-master-ui/` | Play your Game Master through the browser | planned |
+| 6. Web Interface | `ui` branch | Play your Game Master in the browser (Vue 3 + TypeScript): `git switch ui`, `npm ci`, `npm run dev` | **ready** |
 | 7. The Enchanted Armour - Harness | `7_strands_harness/` | The Game Master rebuilt with the managed agent loop | planned |
 
 Complete the chapters in order: each reuses what the previous one built. Every chapter is one binary -

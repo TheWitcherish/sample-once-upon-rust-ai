@@ -38,6 +38,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use strands_agents::a2a::{A2AClientOptions, make_a2a_client};
+use strands_agents::agent::STRUCTURED_OUTPUT_PROMPT;
 use strands_agents::tools::mcp::{MCPClient, StreamableHttpTransport};
 use strands_agents::types::content::ContentBlock;
 use strands_agents::types::message::Message;
@@ -115,10 +116,22 @@ fn wire_message(message: &Message) -> Value {
     json!({ "role": message.role, "content": content })
 }
 
+/// The agent's own "format that as structured output" nudge. It is a user
+/// message in the history, but the player never typed it, so the UI must not
+/// show it as theirs.
+fn is_structured_output_nudge(message: &Message) -> bool {
+    message.text_content() == STRUCTURED_OUTPUT_PROMPT
+}
+
 async fn messages(State(app): State<AppState>) -> Json<Value> {
     let agent = app.agent.lock().await;
     Json(Value::Array(
-        agent.messages().iter().map(wire_message).collect(),
+        agent
+            .messages()
+            .iter()
+            .filter(|m| !is_structured_output_nudge(m))
+            .map(wire_message)
+            .collect(),
     ))
 }
 
@@ -319,6 +332,16 @@ mod tests {
                 ]
             })
         );
+    }
+
+    #[test]
+    fn the_structured_output_nudge_is_not_a_player_message() {
+        assert!(is_structured_output_nudge(&Message::user(
+            STRUCTURED_OUTPUT_PROMPT
+        )));
+        assert!(!is_structured_output_nudge(&Message::user(
+            "I open the door"
+        )));
     }
 
     #[test]
