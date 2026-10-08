@@ -49,7 +49,7 @@ environment. Nothing is hard-coded alone.
 | 2. Bonus Quest - Kiro the Grey Hat | `2_vended_tools/bonus_quest.rs` | `shell` + `editor`, with your y/N approval before every call (`cargo run --bin ch2-bonus-quest`) | **ready** |
 | 3. The Art of Magical Forging | `3_custom_tools/` | Your own tool: the dice roller | **ready** |
 | 4. Planar Portals - MCP | `4_mcp_integration/` | The dice roller served over MCP with `rmcp`, and Lady Luck consuming it | **ready** |
-| 5. The Grand Alliance - A2A | `5_a2a_integration/` | Rules Agent + Character Agent over A2A, a Game Master orchestrator | planned |
+| 5. The Grand Alliance - A2A | `5_a2a_integration/` | Rules Agent (RAG over the Basic Rules) + Character Agent over A2A, a Game Master orchestrator with typed `StoryOutput` answers | **ready** |
 | 6. Web Interface | `game-master-ui/` | Play your Game Master through the browser | planned |
 | 7. The Enchanted Armour - Harness | `7_strands_harness/` | The Game Master rebuilt with the managed agent loop | planned |
 
@@ -64,6 +64,34 @@ Chapter 4 runs in two terminals: `cargo run --bin ch4-dice-mcp-server` first, th
 loopback `Host` headers. To serve it beyond your machine, set `MCP_BIND` and name the extra hosts in
 `MCP_ALLOWED_HOSTS`. It has no authentication, like the Python chapter, so put an authenticating
 proxy in front before exposing it.
+
+Chapter 5 needs the Basic Rules PDF, which is licensed for personal use only and so is not in this
+repo. Put your copy at `5_a2a_integration/utils/DnD_BasicRules_2018.pdf`, then build the knowledge
+base once (about 35 seconds of Titan embedding calls):
+
+```sh
+cargo run --release --bin ch5-create-knowledge-base
+```
+
+Then start four servers, each in its own terminal, and ask the Game Master:
+
+```sh
+cargo run --bin ch4-dice-mcp-server          # dice over MCP, port 8002
+cargo run --bin ch5-rules-agent              # A2A, port 8000
+cargo run --bin ch5-character-agent          # A2A, port 8001
+cargo run --bin ch5-gamemaster-orchestrator  # HTTP, port 8009
+
+curl -s localhost:8009/inquire -H 'content-type: application/json' \
+  -d '{"question":"What are the rules for a dexterity check roll?"}'
+```
+
+The Game Master also serves `GET /health`, `GET /messages` and `GET /user/{name}`. Every server listens
+on loopback only and has no authentication, like the Python chapter. Two differences from Python: each
+A2A agent keeps one conversation shared by all callers, and when the model answers without calling
+`StoryOutput` the Game Master asks it once more, because the Rust SDK cannot force that call.
+
+The Rust SDK's `make_a2a_client` lives on its `feat/a2a-client-tool` branch until it merges, so keep
+the SDK checkout on that branch for Chapter 5.
 
 ## Where the SDK comes from
 

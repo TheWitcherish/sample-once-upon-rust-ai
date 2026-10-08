@@ -81,3 +81,7 @@ path = "5_a2a_integration/utils/create_knowledge_base.rs"
 [[bin]]
 name = "ch5-rules-agent"
 path = "5_a2a_integration/agents/rules_agent/rules_agent.rs"
+
+[[bin]]
+name = "ch5-gamemaster-orchestrator"
+path = "5_a2a_integration/agents/gamemaster_orchestrator/gamemaster_orchestrator.rs"
