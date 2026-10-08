@@ -86,12 +86,15 @@ curl -s localhost:8009/inquire -H 'content-type: application/json' \
 ```
 
 The Game Master also serves `GET /health`, `GET /messages` and `GET /user/{name}`. Every server listens
-on loopback only and has no authentication, like the Python chapter. Two differences from Python: each
-A2A agent keeps one conversation shared by all callers, and when the model answers without calling
-`StoryOutput` the Game Master asks it once more, because the Rust SDK cannot force that call.
+on loopback only and has no authentication, like the Python chapter. Its answers use forced structured
+output like Python's `structured_output_model`: if the model answers in plain text, the agent asks once
+more with only the `StoryOutput` tool offered and the model forced to call it. Browsers may call it from
+`http://localhost:<port>` origins only (Python allows every origin). One difference from Python: each
+A2A agent keeps one conversation shared by all callers.
 
-The Rust SDK's `make_a2a_client` lives on its `feat/a2a-client-tool` branch until it merges, so keep
-the SDK checkout on that branch for Chapter 5.
+Two Rust SDK features this chapter needs are still on review branches: `make_a2a_client`
+(`feat/a2a-client-tool`) and forced structured output (`feat/structured-output-model`, built on top of
+it). Keep the SDK checkout on `feat/structured-output-model` for Chapter 5 until both merge.
 
 ## Where the SDK comes from
 

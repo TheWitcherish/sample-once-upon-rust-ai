@@ -7,7 +7,8 @@
 //! The Game Master keeps no rules and no character sheets of its own. It rolls
 //! dice over MCP (the Chapter 4 server), and asks the Rules Agent and the
 //! Character Agent over A2A, discovering them at runtime with `make_a2a_client`.
-//! Every answer comes back as a typed `StoryOutput`.
+//! Every answer comes back as a typed `StoryOutput`, forced the way Python's
+//! `structured_output_model` forces it.
 //!
 //! Start the three servers first, each in its own terminal:
 //!   cargo run --bin ch4-dice-mcp-server
@@ -20,12 +21,15 @@
 //! Environment overrides: MODEL_ID, AWS_REGION, RUST_LOG, MCP_URL (default
 //! http://localhost:8002/mcp), CHARACTERS_DB, and GAMEMASTER_BIND (default
 //! 127.0.0.1:8009).
+//!
+//! Browsers may call the API from `http://localhost:<port>` and
+//! `http://127.0.0.1:<port>` origins only (the Chapter 6 UI's dev server).
 
 use std::path::PathBuf;
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
-use axum::http::StatusCode;
+use axum::http::{HeaderValue, Method, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
@@ -35,11 +39,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use strands_agents::a2a::{A2AClientOptions, make_a2a_client};
 use strands_agents::tools::mcp::{MCPClient, StreamableHttpTransport};
-use strands_agents::tools::structured_output::{
-    StructuredOutputTool, parse_structured_output_from_result,
-};
+use strands_agents::types::content::ContentBlock;
+use strands_agents::types::message::Message;
 use strands_agents::{Agent, AgentBuilder};
 use tokio::sync::Mutex;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
 const DEFAULT_MCP_URL: &str = "http://localhost:8002/mcp";
 const RULES_AGENT_URL: &str = "http://127.0.0.1:8000";
@@ -48,12 +52,6 @@ const DEFAULT_PORT: u16 = 8009;
 
 /// The Python chapter's prompt, with TTRPG for the brand name.
 const SYSTEM_PROMPT: &str = "You are a TTRPG Game Master. Discover the agents you can reach and ask them instead of guessing: rules questions, character creation and lookups are their job. Every dice roll goes through roll_dice. Never make up what a tool can tell you, and narrate with flair.";
-
-/// Sent once when the model answers in plain text instead of calling
-/// `StoryOutput`. Python's `structured_output_model` forces the call; the Rust
-/// SDK offers the tool but cannot force it, so we ask a second time.
-const STRUCTURED_RETRY: &str =
-    "Give that same answer again by calling the StoryOutput tool. Do not call any other tool.";
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct DiceOutput {
@@ -100,9 +98,28 @@ async fn health() -> Json<Value> {
     Json(json!({ "status": "healthy" }))
 }
 
+/// One message in the Converse API shape Python's `agent.messages` returns,
+/// which the Chapter 6 UI parses: tool blocks are wrapped as
+/// `{"toolUse": {...}}` and `{"toolResult": {...}}`. The Rust SDK serializes
+/// them unwrapped, so the wrapper is added here.
+fn wire_message(message: &Message) -> Value {
+    let content: Vec<Value> = message
+        .content
+        .iter()
+        .map(|block| match block {
+            ContentBlock::ToolUse(tool_use) => json!({ "toolUse": tool_use }),
+            ContentBlock::ToolResult(result) => json!({ "toolResult": result }),
+            other => serde_json::to_value(other).unwrap_or(Value::Null),
+        })
+        .collect();
+    json!({ "role": message.role, "content": content })
+}
+
 async fn messages(State(app): State<AppState>) -> Json<Value> {
     let agent = app.agent.lock().await;
-    Json(serde_json::to_value(agent.messages()).unwrap_or(Value::Null))
+    Json(Value::Array(
+        agent.messages().iter().map(wire_message).collect(),
+    ))
 }
 
 /// Find a character in the Character Agent's TinyDB file, by exact name.
@@ -135,33 +152,46 @@ async fn user(State(app): State<AppState>, Path(user_name): Path<String>) -> Res
     }
 }
 
-async fn ask(agent: &mut Agent, question: &str) -> strands_agents::Result<Option<StoryOutput>> {
-    let result = agent.run(question).await?;
-    Ok(parse_structured_output_from_result(&result).ok())
+async fn ask(agent: &mut Agent, question: &str) -> strands_agents::Result<StoryOutput> {
+    agent
+        .run(question)
+        .await?
+        .structured_output::<StoryOutput>()
 }
 
 async fn inquire(State(app): State<AppState>, Json(request): Json<QuestionRequest>) -> Response {
     tracing::info!(question = %request.question, "processing request");
     let mut agent = app.agent.lock().await;
-    let story = match ask(&mut agent, &request.question).await {
-        Ok(Some(story)) => Ok(story),
-        Ok(None) => {
-            tracing::warn!("no StoryOutput call; asking once more");
-            match ask(&mut agent, STRUCTURED_RETRY).await {
-                Ok(Some(story)) => Ok(story),
-                Ok(None) => Err("the model answered without a StoryOutput twice".to_string()),
-                Err(e) => Err(e.to_string()),
-            }
-        }
-        Err(e) => Err(e.to_string()),
-    };
-    match story {
+    match ask(&mut agent, &request.question).await {
         Ok(story) => Json(json!({ "response": story })).into_response(),
         Err(e) => {
             tracing::error!(error = %e, "inquire failed");
             error(StatusCode::INTERNAL_SERVER_ERROR, "Internal server error")
         }
     }
+}
+
+fn is_local_origin(origin: &HeaderValue) -> bool {
+    let Ok(origin) = origin.to_str() else {
+        return false;
+    };
+    ["http://localhost:", "http://127.0.0.1:"]
+        .iter()
+        .any(|prefix| {
+            origin
+                .strip_prefix(prefix)
+                .is_some_and(|port| port.parse::<u16>().is_ok())
+        })
+}
+
+/// Python allows every origin (`*`) with credentials. The UI needs neither:
+/// it runs on a local dev server and sends no cookies, so only local origins
+/// get in.
+fn cors() -> CorsLayer {
+    CorsLayer::new()
+        .allow_origin(AllowOrigin::predicate(|origin, _| is_local_origin(origin)))
+        .allow_methods([Method::GET, Method::POST])
+        .allow_headers([header::CONTENT_TYPE])
 }
 
 #[tokio::main]
@@ -186,7 +216,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .system_prompt(SYSTEM_PROMPT)
         .tool_provider(Arc::new(dice))
         .tool(Arc::new(a2a))
-        .tool(Arc::new(StructuredOutputTool::<StoryOutput>::new()))
+        .structured_output::<StoryOutput>()
         .build()
         .await?;
 
@@ -206,7 +236,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/messages", get(messages))
         .route("/user/{user_name}", get(user))
         .route("/inquire", post(inquire))
-        .with_state(state);
+        .with_state(state)
+        .layer(cors());
 
     let addr = bind_addr("GAMEMASTER_BIND", DEFAULT_PORT)?;
     let listener = tokio::net::TcpListener::bind(addr).await?;
@@ -246,7 +277,7 @@ mod tests {
             "actions_suggestions": ["Approach the bar", "Leave"],
             "details": "No tools used"
         });
-        let story = StructuredOutputTool::<StoryOutput>::validate(&raw).unwrap();
+        let story: StoryOutput = serde_json::from_value(raw).unwrap();
         assert!(story.dice_rolls.is_empty());
     }
 
@@ -256,14 +287,48 @@ mod tests {
             "response": "", "actions_suggestions": [], "details": "",
             "dice_rolls": [{ "dice_type": "d20", "result": "seventeen", "reason": "attack" }]
         });
-        assert!(StructuredOutputTool::<StoryOutput>::validate(&raw).is_err());
+        assert!(serde_json::from_value::<StoryOutput>(raw).is_err());
     }
 
     #[test]
-    fn the_tool_schema_carries_the_field_descriptions() {
-        let spec = strands_agents::Tool::spec(&StructuredOutputTool::<StoryOutput>::new());
-        let text = serde_json::to_string(&spec).unwrap();
-        assert!(text.contains("StoryOutput"));
-        assert!(text.contains("Brief summary of tools/agents used"));
+    fn the_schema_carries_the_field_descriptions() {
+        let schema = serde_json::to_string(&schemars::schema_for!(StoryOutput)).unwrap();
+        assert!(schema.contains("\"title\":\"StoryOutput\""));
+        assert!(schema.contains("Brief summary of tools/agents used"));
+    }
+
+    #[test]
+    fn messages_use_the_python_wire_shape_the_ui_parses() {
+        use strands_agents::types::content::ToolUseContent;
+        let message = Message::assistant_with_content(vec![
+            ContentBlock::text("Rolling."),
+            ContentBlock::ToolUse(ToolUseContent {
+                tool_use_id: "t1".to_string(),
+                name: "StoryOutput".to_string(),
+                input: json!({ "response": "Hi" }),
+            }),
+        ]);
+        assert_eq!(
+            wire_message(&message),
+            json!({
+                "role": "assistant",
+                "content": [
+                    { "text": "Rolling." },
+                    { "toolUse": { "toolUseId": "t1", "name": "StoryOutput",
+                                   "input": { "response": "Hi" } } }
+                ]
+            })
+        );
+    }
+
+    #[test]
+    fn only_local_origins_pass_cors() {
+        let ok = |o: &str| is_local_origin(&HeaderValue::from_str(o).unwrap());
+        assert!(ok("http://localhost:5173"));
+        assert!(ok("http://127.0.0.1:4173"));
+        assert!(!ok("http://localhost"));
+        assert!(!ok("http://localhost:5173.evil.example"));
+        assert!(!ok("https://evil.example"));
+        assert!(!ok("http://localhost.evil.example:80"));
     }
 }
