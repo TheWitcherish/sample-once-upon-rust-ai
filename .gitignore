@@ -33,3 +33,7 @@ coverage/
 .env
 .env.local
 .env.*.local
+
+# Emitted by vue-tsc -b from the .ts configs
+vite.config.js
+vitest.config.js
