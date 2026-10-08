@@ -11,25 +11,40 @@ description = "A hands-on Rust workshop that teaches the Strands Agents SDK by b
 # published at all), so the workshop depends on a local checkout via path. See
 # README.md -> "Where the SDK comes from" for how to point these elsewhere.
 [dependencies]
-strands-agents = { path = "../../aws/strands-agents-rust/strands-agents", features = ["mcp"] }
+strands-agents = { path = "../../aws/strands-agents-rust/strands-agents", features = ["mcp", "a2a"] }
 strands-agents-tools = { path = "../../aws/strands-agents-rust/strands-agents-tools", features = [
     "http-fetch",
     "shell",
     "file-ops",
 ] }
 async-trait = "0.1.92"
+# Same feature set as the SDK's own AWS dependencies, so SSO profiles keep working.
+aws-config = { version = "1.12.0", default-features = false, features = [
+    "default-https-client",
+    "rt-tokio",
+    "credentials-process",
+    "sso",
+] }
+aws-sdk-bedrockruntime = { version = "1.148.0", default-features = false, features = [
+    "default-https-client",
+    "rt-tokio",
+] }
 axum = "0.8.9"
+chrono = "0.4.45"
+pdf-extract = "0.12.1"
 rand = "0.10.3"
 rmcp = { version = "3.5.1", features = [
     "server",
     "macros",
     "transport-streamable-http-server",
 ] }
+schemars = "1.2.2"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1.27.0", features = ["v4"] }
 
 [[bin]]
 name = "ch1-summoning"
@@ -54,3 +69,7 @@ path = "4_mcp_integration/dice_roll_mcp_server.rs"
 [[bin]]
 name = "ch4-gamemaster-mcp-client"
 path = "4_mcp_integration/gamemaster_mcp_client.rs"
+
+[[bin]]
+name = "ch5-character-agent"
+path = "5_a2a_integration/agents/character_agent/character_agent.rs"
