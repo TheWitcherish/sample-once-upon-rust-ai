@@ -73,3 +73,11 @@ path = "4_mcp_integration/gamemaster_mcp_client.rs"
 [[bin]]
 name = "ch5-character-agent"
 path = "5_a2a_integration/agents/character_agent/character_agent.rs"
+
+[[bin]]
+name = "ch5-create-knowledge-base"
+path = "5_a2a_integration/utils/create_knowledge_base.rs"
+
+[[bin]]
+name = "ch5-rules-agent"
+path = "5_a2a_integration/agents/rules_agent/rules_agent.rs"

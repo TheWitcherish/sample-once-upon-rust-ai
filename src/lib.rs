@@ -17,6 +17,8 @@ use strands_agents::a2a::StrandsA2AExecutor;
 use strands_agents::a2a::server::rpc_dispatch;
 use strands_agents::models::{BedrockModel, ModelConfig};
 
+pub mod knowledge_base;
+
 /// Default Bedrock model for the whole adventure.
 ///
 /// Verified live against the configured Bedrock account (us-east-1, 2026-10-05
