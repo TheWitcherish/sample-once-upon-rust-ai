@@ -30,7 +30,7 @@ use rmcp::schemars::JsonSchema;
 // TODO: Step 1 - Import StreamableHttpService and LocalSessionManager from rmcp
 use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
 use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
-// TODO: Step 2 - Import the tool attribute from rmcp
+// TODO: Step 2 - Import the tool and tool_router attributes from rmcp
 use rmcp::{tool, tool_router};
 use serde::Deserialize;
 
@@ -62,6 +62,7 @@ fn roll_dice(faces: i64) -> Result<i64, String> {
 #[derive(Debug, Clone)]
 struct DiceServer;
 
+// TODO: Step 2 - Add #[tool_router(server_handler)] here and #[tool] on roll_dice to expose it as an MCP tool
 #[tool_router(server_handler)]
 impl DiceServer {
     /// Roll one die with a given number of faces and return the result.
@@ -75,7 +76,6 @@ impl DiceServer {
     /// Notes:
     ///     - One die per call: there is no count parameter.
     ///     - Each roll is independent and uniformly random.
-    // TODO: Step 2 - Add the attribute to expose roll_dice as an MCP tool
     #[tool]
     fn roll_dice(
         &self,
