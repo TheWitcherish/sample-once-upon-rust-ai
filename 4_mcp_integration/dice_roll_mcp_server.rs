@@ -28,10 +28,8 @@ use std::env;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::schemars::JsonSchema;
 // TODO: Step 1 - Import StreamableHttpService and LocalSessionManager from rmcp
-use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
-use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
-// TODO: Step 2 - Import the tool attribute from rmcp
-use rmcp::{tool, tool_router};
+use rmcp::transport::streamable_http_server::StreamableHttpServerConfig;
+// TODO: Step 2 - Import the tool and tool_router attributes from rmcp
 use serde::Deserialize;
 
 const DEFAULT_BIND: &str = "127.0.0.1:8002";
@@ -62,7 +60,7 @@ fn roll_dice(faces: i64) -> Result<i64, String> {
 #[derive(Debug, Clone)]
 struct DiceServer;
 
-#[tool_router(server_handler)]
+// TODO: Step 2 - Add #[tool_router(server_handler)] here and #[tool] on roll_dice to expose it as an MCP tool
 impl DiceServer {
     /// Roll one die with a given number of faces and return the result.
     ///
@@ -75,8 +73,6 @@ impl DiceServer {
     /// Notes:
     ///     - One die per call: there is no count parameter.
     ///     - Each roll is independent and uniformly random.
-    // TODO: Step 2 - Add the attribute to expose roll_dice as an MCP tool
-    #[tool]
     fn roll_dice(
         &self,
         Parameters(RollDiceParams { faces }): Parameters<RollDiceParams>,
@@ -118,21 +114,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = server_config(env::var("MCP_ALLOWED_HOSTS").ok().as_deref());
 
     // TODO: Step 1 - Create an MCP server mounted at /mcp (it listens on port 8002)
-    let mcp: StreamableHttpService<DiceServer, LocalSessionManager> =
-        StreamableHttpService::new(|| Ok(DiceServer), Default::default(), config);
-    let router = axum::Router::new().nest_service("/mcp", mcp);
     let listener = tokio::net::TcpListener::bind(&bind).await?;
 
     println!("Starting TTRPG Dice Roll MCP Server...");
     tracing::info!("listening on http://{}/mcp", listener.local_addr()?);
 
     // TODO: Step 3 - Run the MCP server with axum until Ctrl-C
-    axum::serve(listener, router)
-        .with_graceful_shutdown(async {
-            let _ = tokio::signal::ctrl_c().await;
-            tracing::info!("shutting down");
-        })
-        .await?;
     Ok(())
 }
 

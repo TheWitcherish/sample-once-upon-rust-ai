@@ -28,7 +28,6 @@ use strands_agents::tools::ToolContext;
 use strands_agents::types::content::ContentBlock;
 use strands_agents::{AgentBuilder, Result};
 // TODO: Step 1 - Import Shell and Editor from strands_agents_tools
-use strands_agents_tools::{Editor, Shell};
 
 /// The Python chapter's exact query.
 const QUERY: &str = "Create a magical scroll that generates the first 10 numbers of the Fibonacci sequence and demonstrate its power!";
@@ -104,10 +103,7 @@ async fn main() -> Result<()> {
     let mut arcane_scribe = AgentBuilder::new()
         .model(Box::new(model))
         // TODO: Step 1 - Add the Shell and Editor tools to your agent
-        .tool(Arc::new(Shell::new()))
-        .tool(Arc::new(Editor::new()))
         // TODO: Step 2 - Ask for your approval before each tool call with the HumanInTheLoop hook
-        .hook(Box::new(HumanInTheLoop))
         .system_prompt(system_prompt(&cwd))
         .build()
         .await?;

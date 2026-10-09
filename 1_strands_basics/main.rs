@@ -28,13 +28,6 @@ async fn main() -> Result<()> {
     //         subscriber with an env filter is the direct analogue. Default to
     //         info so the demo stays readable; RUST_LOG=strands_agents=debug
     //         opens the floodgates.
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "strands_agents=info".into()),
-        )
-        .with_target(true)
-        .init();
 
     println!("Summoning a game master on {}\n", model_id());
 
@@ -42,37 +35,12 @@ async fn main() -> Result<()> {
     //
     // Python's Agent() defaults to Bedrock. Rust names the provider explicitly -
     // that is the only structural difference in this whole chapter.
-    let model = game_master_model().await?;
-
-    let mut agent = AgentBuilder::new()
-        .model(Box::new(model))
-        .name("Game Master")
-        .system_prompt(GAME_MASTER_PROMPT)
-        .build()
-        .await?;
 
     // TODO: Step 3 - Invoke your agent with a basic query such as "Hi, I am an adventurer ready for adventure!"
     //
     // Python: agent("Hi, ...") prints as a side effect.
     // Rust:   agent.run(..) returns an AgentResult, so the caller decides what
     //         to do with it.
-    println!("Adventurer: {FIRST_QUERY}\n");
-    let result = agent.run(FIRST_QUERY).await?;
-    println!("Game Master: {}\n", result.content);
-
-    let usage = &result.event_loop_metrics.accumulated_usage;
-    println!(
-        "[stop_reason={} | input_tokens={} | output_tokens={}]\n",
-        result.stop_reason, usage.input_tokens, usage.output_tokens
-    );
-
-    // The agent carries its own history, so a follow-up needs no plumbing.
-    let follow_up = "I check the tavern for a quest board. What do I find?";
-    println!("Adventurer: {follow_up}\n");
-    let result = agent.run(follow_up).await?;
-    println!("Game Master: {}\n", result.content);
-
-    println!("Messages retained in history: {}\n", agent.messages().len());
 
     Ok(())
 }

@@ -52,53 +52,11 @@ struct RollDice;
 impl Tool for RollDice {
     fn spec(&self) -> ToolSpec {
         // TODO: Step 2 - Write the description, the faces parameter and the return value
-        ToolSpec::new(
-            "roll_dice",
-            "Roll one die with a given number of faces and return the result.\n\n\
-             Use it every time the game needs a random roll: ability scores, attack rolls, \
-             saving throws, damage. Call it once per die; for \"4d6 drop lowest\", call it \
-             four times with faces=6 and discard the lowest result yourself.\n\n\
-             Example response: 14\n\n\
-             Notes:\n    \
-             - One die per call: there is no count parameter.\n    \
-             - Each roll is independent and uniformly random.\n\n\
-             Returns an integer between 1 and faces, inclusive.",
-            json!({
-                "type": "object",
-                "properties": {
-                    "faces": {
-                        "type": "integer",
-                        "description": "Number of faces on the die, 1 or more. Use 20 for a d20, \
-                                        6 for a d6, 100 for a percentile die. Defaults to 6.",
-                        "default": 6
-                    }
-                }
-            }),
-        )
+        todo!("Step 1 - Tell the model about roll_dice: its name, description and input schema")
     }
 
-    async fn execute(&self, input: Value, _ctx: &mut ToolContext) -> Result<ToolResult> {
-        // The model sends raw JSON. A missing `faces` means the default d6;
-        // anything that is not an integer goes back as an error the model can read.
-        let faces = match input.get("faces") {
-            None => 6,
-            Some(value) => match value.as_i64() {
-                Some(faces) => faces,
-                None => {
-                    return Ok(ToolResult::error(format!(
-                        "faces must be an integer, got {value}"
-                    )));
-                }
-            },
-        };
-
-        Ok(match roll_dice(faces) {
-            Ok(roll) => {
-                tracing::info!(faces, roll, "roll_dice");
-                ToolResult::success(roll.to_string())
-            }
-            Err(reason) => ToolResult::error(reason),
-        })
+    async fn execute(&self, _input: Value, _ctx: &mut ToolContext) -> Result<ToolResult> {
+        todo!("Step 1 - Read faces from the model's JSON input and roll the die")
     }
 }
 
@@ -122,7 +80,6 @@ async fn main() -> Result<()> {
         .name("Lady Luck")
         .system_prompt(LADY_LUCK_PROMPT)
         // TODO: Step 3 - Add the tool to the agent
-        .tool(Arc::new(RollDice))
         .build()
         .await?;
 
@@ -149,7 +106,6 @@ async fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use strands_agents::tools::ToolStatus;
 
     #[test]
     fn roll_dice_stays_on_the_die() {
@@ -163,32 +119,5 @@ mod tests {
     fn roll_dice_refuses_a_die_with_no_faces() {
         assert!(roll_dice(0).is_err());
         assert!(roll_dice(-3).is_err());
-    }
-
-    // These go through `execute` with the raw JSON shape the model produces,
-    // not through `roll_dice` directly, so the boundary itself is tested.
-    async fn call(input: Value) -> ToolResult {
-        RollDice
-            .execute(input, &mut ToolContext::default())
-            .await
-            .expect("execute never returns Err")
-    }
-
-    #[tokio::test]
-    async fn missing_faces_rolls_a_d6() {
-        let result = call(json!({})).await;
-        assert!(matches!(result.status, ToolStatus::Success));
-    }
-
-    #[tokio::test]
-    async fn zero_faces_comes_back_as_a_tool_error() {
-        let result = call(json!({ "faces": 0 })).await;
-        assert!(matches!(result.status, ToolStatus::Error));
-    }
-
-    #[tokio::test]
-    async fn non_integer_faces_comes_back_as_a_tool_error() {
-        let result = call(json!({ "faces": "twenty" })).await;
-        assert!(matches!(result.status, ToolStatus::Error));
     }
 }

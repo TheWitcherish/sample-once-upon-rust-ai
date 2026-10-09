@@ -25,7 +25,6 @@ use std::sync::Arc;
 
 use once_upon_agentic_ai::game_master_model;
 // TODO: Step 1 - Import MCPClient and StreamableHttpTransport from strands_agents::tools::mcp
-use strands_agents::tools::mcp::{MCPClient, StreamableHttpTransport};
 use strands_agents::{AgentBuilder, Result};
 
 const DEFAULT_MCP_URL: &str = "http://localhost:8002/mcp";
@@ -66,14 +65,12 @@ async fn main() -> Result<()> {
 
     let url = env::var("MCP_URL").unwrap_or_else(|_| DEFAULT_MCP_URL.to_string());
     // TODO: Step 1 - Create a streamable http MCPClient connecting to url (default "http://localhost:8002/mcp")
-    let dice_portal = MCPClient::new(Box::new(StreamableHttpTransport::new(url.as_str())));
 
     let model = game_master_model().await?;
     let mut gamemaster = AgentBuilder::new()
         .model(Box::new(model))
         .system_prompt(LADY_LUCK_PROMPT)
         // TODO: Step 2 - Add the MCP tool provider to the gamemaster agent
-        .tool_provider(Arc::new(dice_portal))
         .build()
         .await?;
 

@@ -390,33 +390,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let agent = AgentBuilder::new()
         .model(Box::new(game_master_model().await?))
         // TODO: Step 1 - Add the create_character, find_character_by_name and list_all_characters tools to the agent
-        .tool(Arc::new(CreateCharacter(Arc::clone(&db))))
-        .tool(Arc::new(FindCharacterByName(Arc::clone(&db))))
-        .tool(Arc::new(ListAllCharacters(db)))
         // TODO: Step 2 - Add the name NAME ("Character Agent") to the agent
-        .name(NAME)
         // TODO: Step 3 - Add the description DESCRIPTION ("TTRPG character management: creates characters (ability scores rolled 4d6 drop lowest), stores them, finds and lists them.") to the agent
-        .description(DESCRIPTION)
         .system_prompt(SYSTEM_PROMPT)
         .build()
         .await?;
 
     // TODO: Step 4 - Create a StrandsA2AExecutor for the agent, with its three tools as skills
     // Python's A2AServer lists the tools as skills on its own; here we say so.
-    let executor = StrandsA2AExecutor::for_agent(agent, NAME, DESCRIPTION)
-        .with_version(env!("CARGO_PKG_VERSION"))
-        .with_skill(skill(
-            "create_character",
-            "Create a new character and save it.",
-        ))
-        .with_skill(skill(
-            "find_character_by_name",
-            "Find a stored character by its exact name.",
-        ))
-        .with_skill(skill("list_all_characters", "List every stored character."));
 
     // TODO: Step 5 - Start the A2A server on port 8001 with serve_a2a
-    serve_a2a(executor, bind_addr("CHARACTER_AGENT_BIND", DEFAULT_PORT)?).await?;
     Ok(())
 }
 
