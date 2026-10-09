@@ -40,8 +40,9 @@ npm run build   # type-check with vue-tsc, then bundle with Vite
 
 - Runs locally with `npm run dev`; the GitHub Pages workflow and its redirect page are removed.
 - `npm audit fix`: in-range updates (`vue` 3.5.43, `vite` 6.4.4, `postcss`, `nanoid` and more), so the
-  shipped app has no known advisories. The dev-only test runner still has advisories that are only
-  fixed in Vitest 5, a major upgrade left for later.
+  shipped app has no known advisories.
+- Vitest 5 (from 3), which clears the test runner's `tinypool` and `@vitest/mocker` advisories, so
+  `npm audit` reports 0 vulnerabilities. No test or config changes were needed.
 - Dice results are numbers, matching `DiceOutput.result: int` on both backends.
 - The fallback dice shape names itself for screen readers (`aria-label`).
 - Tests updated to the current behaviour (hidden first prompt, closing animation, Send button state,
