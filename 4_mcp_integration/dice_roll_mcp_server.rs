@@ -27,8 +27,10 @@ use std::env;
 
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::schemars::JsonSchema;
+// TODO: Step 1 - Import StreamableHttpService and LocalSessionManager from rmcp
 use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
 use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
+// TODO: Step 2 - Import the tool attribute from rmcp
 use rmcp::{tool, tool_router};
 use serde::Deserialize;
 
@@ -73,6 +75,7 @@ impl DiceServer {
     /// Notes:
     ///     - One die per call: there is no count parameter.
     ///     - Each roll is independent and uniformly random.
+    // TODO: Step 2 - Add the attribute to expose roll_dice as an MCP tool
     #[tool]
     fn roll_dice(
         &self,
@@ -114,6 +117,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bind = env::var("MCP_BIND").unwrap_or_else(|_| DEFAULT_BIND.to_string());
     let config = server_config(env::var("MCP_ALLOWED_HOSTS").ok().as_deref());
 
+    // TODO: Step 1 - Create an MCP server mounted at /mcp (it listens on port 8002)
     let mcp: StreamableHttpService<DiceServer, LocalSessionManager> =
         StreamableHttpService::new(|| Ok(DiceServer), Default::default(), config);
     let router = axum::Router::new().nest_service("/mcp", mcp);
@@ -122,6 +126,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Starting TTRPG Dice Roll MCP Server...");
     tracing::info!("listening on http://{}/mcp", listener.local_addr()?);
 
+    // TODO: Step 3 - Run the MCP server with axum until Ctrl-C
     axum::serve(listener, router)
         .with_graceful_shutdown(async {
             let _ = tokio::signal::ctrl_c().await;

@@ -17,6 +17,7 @@ use std::sync::Arc;
 
 use once_upon_agentic_ai::{GAME_MASTER_PROMPT, game_master_model};
 use strands_agents::{AgentBuilder, Result};
+// TODO: Step 1 - Import HttpFetch from strands_agents_tools
 use strands_agents_tools::HttpFetch;
 
 /// Where the rules live. Kept line for line with the Python prompt so the two
@@ -45,6 +46,7 @@ async fn main() -> Result<()> {
     // tell the game master where the rules live; it decides when to reach for it.
     let mut agent = AgentBuilder::new()
         .model(Box::new(model))
+        // TODO: Step 1 - Add the HttpFetch tool to your agent
         .tool(Arc::new(HttpFetch::new()))
         .system_prompt(format!("{GAME_MASTER_PROMPT}.\n    {RULES_LOOKUP}"))
         .build()

@@ -218,7 +218,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     let mcp_url = std::env::var("MCP_URL").unwrap_or_else(|_| DEFAULT_MCP_URL.to_string());
+    // TODO: Step 1 - Create a streamable http MCPClient connecting to mcp_url (default "http://localhost:8002/mcp")
     let dice = MCPClient::new(Box::new(StreamableHttpTransport::new(mcp_url.as_str())));
+    // TODO: Step 2 - Create the A2A client tool with make_a2a_client and the allowed agent endpoints
     let a2a = make_a2a_client(A2AClientOptions::new([
         RULES_AGENT_URL,
         CHARACTER_AGENT_URL,
@@ -227,8 +229,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let agent = AgentBuilder::new()
         .model(Box::new(game_master_model().await?))
         .system_prompt(SYSTEM_PROMPT)
+        // TODO: Step 3 - Add the dice MCP client and the a2a tool to the agent
         .tool_provider(Arc::new(dice))
         .tool(Arc::new(a2a))
+        // TODO: Step 4 - Force the response to use the StoryOutput model
         .structured_output::<StoryOutput>()
         .build()
         .await?;

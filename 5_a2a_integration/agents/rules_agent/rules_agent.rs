@@ -130,13 +130,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let agent = AgentBuilder::new()
         .model(Box::new(game_master_model().await?))
+        // TODO: Step 1 - Add the query_dnd_rules tool to the agent
+        .tool(Arc::new(QueryRules { kb, embedder }))
+        // TODO: Step 2 - Add the name NAME ("Rules Agent") to the agent
         .name(NAME)
+        // TODO: Step 3 - Add the description DESCRIPTION ("D&D 5e rules lookup: fast, page-referenced answers from the Basic Rules knowledge base.") to the agent
         .description(DESCRIPTION)
         .system_prompt(SYSTEM_PROMPT)
-        .tool(Arc::new(QueryRules { kb, embedder }))
         .build()
         .await?;
 
+    // TODO: Step 4 - Create a StrandsA2AExecutor for the agent, with query_dnd_rules as a skill
     let executor = StrandsA2AExecutor::for_agent(agent, NAME, DESCRIPTION)
         .with_version(env!("CARGO_PKG_VERSION"))
         .with_skill(AgentSkill {
@@ -146,6 +150,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             tags: Vec::new(),
         });
 
+    // TODO: Step 5 - Start the A2A server on port 8000 with serve_a2a
     serve_a2a(executor, bind_addr("RULES_AGENT_BIND", DEFAULT_PORT)?).await?;
     Ok(())
 }

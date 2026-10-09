@@ -47,19 +47,29 @@ fn roll_dice(faces: i64) -> std::result::Result<i64, String> {
 /// model fills in when it decides to roll.
 struct RollDice;
 
+// TODO: Step 1 - Implement the Tool trait to transform RollDice into a tool
 #[async_trait]
 impl Tool for RollDice {
     fn spec(&self) -> ToolSpec {
+        // TODO: Step 2 - Write the description, the faces parameter and the return value
         ToolSpec::new(
             "roll_dice",
-            "Roll a single die and return the result. \
-             Use it for every dice roll; never invent a number.",
+            "Roll one die with a given number of faces and return the result.\n\n\
+             Use it every time the game needs a random roll: ability scores, attack rolls, \
+             saving throws, damage. Call it once per die; for \"4d6 drop lowest\", call it \
+             four times with faces=6 and discard the lowest result yourself.\n\n\
+             Example response: 14\n\n\
+             Notes:\n    \
+             - One die per call: there is no count parameter.\n    \
+             - Each roll is independent and uniformly random.\n\n\
+             Returns an integer between 1 and faces, inclusive.",
             json!({
                 "type": "object",
                 "properties": {
                     "faces": {
                         "type": "integer",
-                        "description": "Number of faces on the die, e.g. 6 for a d6 or 20 for a d20",
+                        "description": "Number of faces on the die, 1 or more. Use 20 for a d20, \
+                                        6 for a d6, 100 for a percentile die. Defaults to 6.",
                         "default": 6
                     }
                 }
@@ -111,6 +121,7 @@ async fn main() -> Result<()> {
         .model(Box::new(model))
         .name("Lady Luck")
         .system_prompt(LADY_LUCK_PROMPT)
+        // TODO: Step 3 - Add the tool to the agent
         .tool(Arc::new(RollDice))
         .build()
         .await?;

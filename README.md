@@ -29,7 +29,8 @@ cargo run --bin ch1-summoning
 ```
 
 That is the whole loop: credentials in, story out. If you see the Game Master answer the adventurer,
-Chapter 1 is done.
+Chapter 1 is done. On `main` each chapter is a skeleton: fill in its `// TODO` steps first, or run
+it from the `solution` branch to see the finished version.
 
 The agents run on **Amazon Bedrock** (Claude Sonnet 4.6 by default). Pick a cheaper model any time:
 
@@ -112,7 +113,9 @@ story arrives when both crates are published; until then this is the honest setu
 
 ## Branches
 
-- `main`: the chapters as written here.
+- `main`: the skeleton you clone, with `// TODO` markers to fill in, at the same steps as the Python workshop.
+- `solution`: the same files with the answers written below each TODO. Switch to it if you get stuck.
+- `ui`: the Chapter 6 web interface.
 - Live-built work (a stream, a video) lands on its own `feat/chapter-N-*` branch, then a PR into `main`.
 
 ## Credits
