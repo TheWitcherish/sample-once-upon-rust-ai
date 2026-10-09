@@ -9,6 +9,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 use aws_sdk_bedrockruntime::Client;
+use aws_sdk_bedrockruntime::error::DisplayErrorContext;
 use aws_sdk_bedrockruntime::primitives::Blob;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -202,7 +203,9 @@ impl Embedder {
             .body(Blob::new(serde_json::to_vec(&body)?))
             .send()
             .await
-            .map_err(|e| format!("Bedrock embedding call failed: {}", e.into_service_error()))?;
+            // DisplayErrorContext walks the source chain; plain Display on a
+            // credential or connection failure only says "unhandled error".
+            .map_err(|e| format!("Bedrock embedding call failed: {}", DisplayErrorContext(&e)))?;
         let answer: Value = serde_json::from_slice(response.body().as_ref())?;
         let embedding: Vec<f32> = serde_json::from_value(
             answer
