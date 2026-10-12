@@ -397,7 +397,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     // TODO: Step 4 - Create a StrandsA2AExecutor for the agent, with its three tools as skills
-    // Python's A2AServer lists the tools as skills on its own; here we say so.
 
     // TODO: Step 5 - Start the A2A server on port 8001 with serve_a2a
     Ok(())
