@@ -6,7 +6,7 @@
 //! The game master gains a tool it did not have to write: `http_fetch`, shipped
 //! by the `strands-agents-tools` crate (Python: `http_request` from
 //! `strands.vended_tools`). It looks up real spell and monster data on the live
-//! 5e SRD API instead of inventing it.
+//! Open5e API instead of inventing it.
 //!
 //! Run with:
 //!   cargo run --bin ch2-vended-tools
@@ -20,13 +20,12 @@ use strands_agents::{AgentBuilder, Result};
 // TODO: Step 1 - Import HttpFetch from strands_agents_tools
 use strands_agents_tools::HttpFetch;
 
-/// Where the rules live. Kept line for line with the Python prompt so the two
-/// versions read side by side.
+/// Where the rules live. Same lookup as the Python prompt, on the Open5e API.
 const RULES_LOOKUP: &str =
-    "When asked about a spell or a monster, look it up on the 5e SRD API and answer from the data:
-    - spells:   https://www.dnd5eapi.co/api/2014/spells/<index>
-    - monsters: https://www.dnd5eapi.co/api/2014/monsters/<index>
-    where <index> is the lowercase name with hyphens (e.g. fireball, adult-red-dragon).";
+    "When asked about a spell or a monster, look it up on the Open5e API and answer from the data:
+    - spells:   https://api.open5e.com/v1/spells/<slug>/
+    - monsters: https://api.open5e.com/v1/monsters/<slug>/
+    where <slug> is the lowercase name with hyphens (e.g. fireball, adult-red-dragon).";
 
 /// The Python chapter's exact query.
 const QUERY: &str = "What does the Fireball spell do, and how much damage does it deal?";
