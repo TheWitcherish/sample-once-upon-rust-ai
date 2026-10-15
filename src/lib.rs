@@ -42,9 +42,7 @@ pub fn model_id() -> String {
 /// `AWS_PROFILE`, ...). A high temperature is the right default for a
 /// storyteller; a low one would make it repeat itself.
 pub async fn game_master_model() -> Result<BedrockModel> {
-    let config = ModelConfig::new(model_id())
-        .with_temperature(0.9)
-        .with_max_tokens(1024);
+    let config = ModelConfig::new(model_id()).with_temperature(0.9);
     BedrockModel::with_config(config).await
 }
 
