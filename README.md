@@ -47,7 +47,7 @@ environment. Nothing is hard-coded alone.
 | Chapter | Folder | What you build | Status |
 |---|---|---|---|
 | 1. The Art of Agent Summoning | `1_strands_basics/` | Your first agent, a system prompt, debug logs | **ready** |
-| 2. The Adventurer's Arsenal - Vended Tools | `2_vended_tools/` | A tool you did not write: `http_fetch` on the live 5e SRD API | **ready** |
+| 2. The Adventurer's Arsenal - Vended Tools | `2_vended_tools/` | A tool you did not write: `http_fetch` on the live Open5e API | **ready** |
 | 2. Bonus Quest - Kiro the Grey Hat | `2_vended_tools/bonus_quest.rs` | `shell` + `editor`, with your y/N approval before every call (`cargo run --bin ch2-bonus-quest`) | **ready** |
 | 3. The Art of Magical Forging | `3_custom_tools/` | Your own tool: the dice roller | **ready** |
 | 4. Planar Portals - MCP | `4_mcp_integration/` | The dice roller served over MCP with `rmcp`, and Lady Luck consuming it | **ready** |
@@ -59,7 +59,7 @@ Complete the chapters in order: each reuses what the previous one built. Every c
 `cargo run --bin ch<N>-<name>`.
 
 Rules lookups use the SRD 5.1 (System Reference Document, CC-BY-4.0) served by the
-[5e SRD API](https://www.dnd5eapi.co).
+[Open5e API](https://open5e.com).
 
 Chapter 4 runs in two terminals: `cargo run --bin ch4-dice-mcp-server` first, then
 `cargo run --bin ch4-gamemaster-mcp-client`, then type a request such as `roll 3d20`. The server listens on `127.0.0.1:8002` and only accepts
@@ -93,10 +93,6 @@ output like Python's `structured_output_model`: if the model answers in plain te
 more with only the `StoryOutput` tool offered and the model forced to call it. Browsers may call it from
 `http://localhost:<port>` origins only (Python allows every origin). One difference from Python: each
 A2A agent keeps one conversation shared by all callers.
-
-Two Rust SDK features this chapter needs are still on review branches: `make_a2a_client`
-(`feat/a2a-client-tool`) and forced structured output (`feat/structured-output-model`, built on top of
-it). Keep the SDK checkout on `feat/structured-output-model` for Chapter 5 until both merge.
 
 ## Where the SDK comes from
 
