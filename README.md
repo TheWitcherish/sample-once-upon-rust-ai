@@ -101,7 +101,7 @@ early `0.1.0` there; `strands-agents-tools`, which Chapter 2 onward depends on, 
 all). So `Cargo.toml` points at a **local checkout** of the SDK via a relative path:
 
 ```
-sample-once-upon-rust-ai/           <- you are here
+sample-once-upon-rust-harness-sdk/  <- you are here
 ../../aws/strands-agents-rust/      <- the SDK checkout the paths expect
 ```
 
